@@ -1,0 +1,54 @@
+<apex:component controller="R4_PASCaseNotificationCtrl" access="global">
+    <apex:attribute name="caseId" type="String" description="Case Id field from Email Template"
+                    required="true" assignTo="{!currentCaseId}" access="global"/>
+    <!--Case Products table-->
+    <table>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Product Description</th>
+            <th>Additional Comments</th>
+            <th>UPC #</th>
+            <th>Product #</th>
+            <th>Product Code</th>
+            <th>Sub Product Code</th>
+            <th>Global Sales Code</th>
+            <th>Global Sales Code Description</th>
+        </tr>
+        <apex:repeat value="{!CurrentCaseProducts}" var="cp">
+        <tr>
+            <td>{!cp.Product__r.Name}</td>
+            <td>{!cp.Quantity__c}</td>
+            <td>{!cp.Product_Description__c}</td>
+            <td>{!cp.Additional_Comments__c}</td>
+            <td>{!cp.UPC__c}</td>
+            <td>{!cp.ProductNum__c}</td>
+            <td>{!cp.Product__r.Profit_Center_Code__c}</td>
+            <td>{!cp.Product__r.Sub_Product__c}</td>
+            <td>{!cp.Product__r.Global_Sales_Code_GSC__c}</td>
+            <td>{!cp.Product__r.GSC_Description__c}</td>
+        </tr>
+        </apex:repeat>
+    </table>
+    <br />
+    
+    <!--Case Comments table
+    <table>
+        <tr>
+            <th>Created Date</th>
+            <th>Created By</th>
+            <th>Comment</th>
+        </tr>
+        <apex:repeat value="{!CurrentCaseComments}" var="cc">
+        <tr>
+            <td>
+                <apex:outputText value="{0,date,MM'/'dd'/'yyyy HH:mm:ss a}">
+                    <apex:param value="{!cc.CreatedDate}" />
+                </apex:outputText>
+            </td>
+            <td>{!cc.CreatedBy.Name}</td>
+            <td>{!cc.CommentBody}</td>
+        </tr>
+        </apex:repeat>
+    </table>-->
+</apex:component>

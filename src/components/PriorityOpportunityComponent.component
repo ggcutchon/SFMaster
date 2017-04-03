@@ -1,0 +1,179 @@
+<apex:component >
+  <apex:attribute name="opportunities" description="List of Opp" type="opportunity[]" required="true" />
+  <apex:attribute name="isInPDF" description="Using in PDF" type="Boolean" default="false" />
+  <apex:attribute name="label" description="Title of Section" type="String" />
+  <apex:attribute name="isInM" description="Using in Mobile" type="Boolean" default="false" />
+  <apex:outputPanel rendered="{!NOT(isInM)}">
+    <apex:outputPanel rendered="{!NOT(isInPDF)}">
+      <style>
+      .odd {background-color: #E1ECF4;}      
+      .header {background-color: #CCCCCC;}      
+      .hdlr {overflow-y: scroll;height: 200px;}
+      </style>
+      <font color="RED" id="f1"><apex:messages id="MsgId1" /></font>
+    </apex:outputPanel>
+    <div class="{!IF(isInPDF,'','hdlr')}">
+      <apex:outputPanel rendered="{!AND(isInPDF,NOT(ISBLANK(label)))}">
+        <apex:outputText styleClass="sectionLabels" value="{!label}" />
+        <br />
+      </apex:outputPanel>
+      <apex:dataTable rendered="{!OR(isInPDF,AND(NOT(isINPDF),opportunities.size>0))}" width="{!IF(isINPDF,'100%','90%')}" style="font-size: {!IF(isInPDF,'95%;','inherit')}" headerClass="header" border="1" value="{!opportunities}" var="opp" cellpadding="2" id="theTable" rowClasses="odd,even" styleClass="tableClass">
+        <apex:column id="col1">
+          <apex:facet name="header">
+            <apex:outputLabel id="label1" value="{!$Label.CL00012}" />
+          </apex:facet>
+          <apex:outputPanel rendered="{!isInPDF}">
+            <apex:outputField value="{!opp.account.name}" />
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!NOT(OR(isInPDF,ISBLANK(opp.account.Id)))}">
+            <a href="{!URLFOR($Action.Account.View, opp.account.Id)}" target="_blank"><apex:outputField value="{!opp.account.name}" /></a>            
+          </apex:outputPanel>
+        </apex:column>
+        <apex:column id="col2">
+          <apex:facet name="header">
+            <apex:outputLabel id="label2" value="{!$Label.CL00013}" />
+          </apex:facet>
+          <apex:outputPanel rendered="{!NOT(OR(isInPDF,ISBLANK(opp.Id)))}">
+            <a href="{!URLFOR($Action.Opportunity.View, opp.Id)}" target="_blank"><apex:outputField value="{!opp.name}" /></a>
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!isInPDF}">
+            <apex:outputField value="{!opp.name}" />
+          </apex:outputPanel>
+        </apex:column>
+        <apex:column id="col3">
+          <apex:facet name="header">
+            <apex:outputLabel id="label3"
+              value="{!$Label.Sales_Plan_Opportunity_Amount_Label}" />
+          </apex:facet>
+          <apex:outputField id="opFld3" value="{!opp.Amount}" />
+        </apex:column>
+        <apex:column id="col4">
+          <apex:facet name="header">
+            <apex:outputLabel id="label4"
+              value="{!$Label.Sales_Plan_Channel_Partner_Label}" />
+          </apex:facet>
+          <apex:outputPanel rendered="{!isInPDF}">
+            <apex:outputField value="{!opp.Associated_distributor_Channel_Partner__r.Name}" />
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!NOT(OR(isInPDF,ISBLANK(opp.Associated_distributor_Channel_Partner__c)))}">
+            <a href="{!URLFOR($Action.Account.View, opp.Associated_distributor_Channel_Partner__c)}" target="_blank"><apex:outputField value="{!opp.Associated_distributor_Channel_Partner__r.name}" /></a>
+          </apex:outputPanel>
+        </apex:column>
+        <apex:column id="col5">
+          <apex:facet name="header">
+            <apex:outputLabel id="label5" value="Close Date" />
+          </apex:facet>
+          <apex:outputField id="opFld5" value="{!opp.CloseDate}" />
+        </apex:column>
+        <apex:column id="col6">
+          <apex:facet name="header">
+            <apex:outputLabel id="label6" value="{!$Label.CL00018}" />
+          </apex:facet>
+          <apex:outputField id="opFld6" value="{!opp.StageName}" />
+        </apex:column>
+      </apex:dataTable>
+      <apex:outputText id="text1" rendered="{!(opportunities.size = 0)}" value="{!$Label.CL00005}" />
+    </div>
+    <script type="text/javascript">
+      (function(l){
+        console.log('execute..' + /^#\/sObject/.test(l.hash));
+        console.log('hash..' + l.hash);
+        if(l.hash && /^#\/sObject/.test(l.hash)){
+          var divs = document.getElementsByClassName('hdlr');
+          divs[0].style.height = 'inherit';
+        }         
+      })(window.location)
+    </script>
+  </apex:outputPanel>
+  <apex:outputPanel rendered="{!isInM}">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=yes" /> 
+      <title></title>
+      <apex:stylesheet value="{!URLFOR($Resource.SLDS0110, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+      <style>
+        .slds .slds-dl--horizontal__label {
+            width:48%; float:left;
+            clear: left
+        }       
+        .slds .slds-dl--horizontal__detail {
+            margin-left: calc(48% + 2px);
+        }
+      </style>
+    </head>
+    <body>
+      <div class="slds">
+        <div class="slds-card">
+          <div class="slds-card__header slds-grid">
+            <div class="slds-media slds-media--center slds-has-flexi-truncate">
+              <div class="slds-media__figure">
+                <svg aria-hidden="true" class="slds-icon slds-icon-standard-opportunity">
+                  <use xlink:href="{!URLFOR($Resource.SLDS0110,'/assets/icons/standard-sprite/svg/symbols.svg#opportunity')}"></use>
+                </svg>
+              </div>
+              <div class="slds-media__body">
+                <h2 class="slds-text-heading--small">{!label}({!opportunities.size})</h2>
+              </div>
+            </div>
+          </div>
+          <div class="slds-card__body">
+            <ul>
+              <apex:repeat value="{!opportunities}" var="opp">
+              <li class="slds-tile slds-hint-parent">
+                <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+                  <p class="slds-tile__title slds-truncate"><a href="{!URLFOR($Action.Opportunity.View,opp.Id)}">{!opp.Name}</a></p>
+                </div>
+                <div class="slds-tile__detail">
+                  <dl class="slds-dl--horizontal">
+                    <dt class="slds-dl--horizontal__label">
+                      <p class="slds-truncate">{!$Label.CL00012}:</p>
+                    </dt>
+                    <dd class="slds-dl--horizontal__detail slds-tile__meta">
+                      <p class="slds-truncate">
+                      <apex:outputPanel rendered="{!NOT(ISBLANK(opp.Account.Id))}">
+                        <a href="{!URLFOR($Action.Account.View,opp.Account.Id)}">{!opp.account.name}</a>
+                      </apex:outputPanel>
+                      <apex:outputText value="&nbsp;" escape="false" rendered="{!ISBLANK(opp.Account.Id)}" />
+                      </p>
+                    </dd>
+                    <dt class="slds-dl--horizontal__label">
+                      <p class="slds-truncate">{!$Label.Sales_Plan_Opportunity_Amount_Label}:</p>
+                    </dt>
+                    <dd class="slds-dl--horizontal__detail slds-tile__meta">
+                      <p class="slds-truncate"><apex:outputText escape="false" value="{!IF(ISBLANK(opp.Amount),'&nbsp;',opp.Amount)}" /></p>
+                    </dd>
+                    <dt class="slds-dl--horizontal__label">
+                      <p class="slds-truncate">{!$Label.Sales_Plan_Channel_Partner_Label}:</p>
+                    </dt>
+                    <dd class="slds-dl--horizontal__detail slds-tile__meta">
+                      <p class="slds-truncate">
+                      <apex:outputPanel rendered="{!NOT(ISBLANK(opp.Associated_distributor_Channel_Partner__c))}">
+                        <a href="{!URLFOR($Action.Account.View,opp.Associated_distributor_Channel_Partner__c)}">{!opp.Associated_distributor_Channel_Partner__r.name}</a>
+                      </apex:outputPanel>
+                      <apex:outputText value="&nbsp;" escape="false" rendered="{!ISBLANK(opp.Associated_distributor_Channel_Partner__c)}" />
+                      </p>
+                    </dd>
+                    <dt class="slds-dl--horizontal__label">
+                      <p class="slds-truncate">Close Date:</p>
+                    </dt>
+                    <dd class="slds-dl--horizontal__detail slds-tile__meta">
+                      <p class="slds-truncate"><apex:outputField value="{!opp.CloseDate}" rendered="{!NOT(ISBLANK(opp.CloseDate))}"/><apex:outputText value="&nbsp;" escape="false" rendered="{!ISBLANK(opp.CloseDate)}" /></p>
+                    </dd>
+                    <dt class="slds-dl--horizontal__label">
+                      <p class="slds-truncate">{!$Label.CL00018}:</p>
+                    </dt>
+                    <dd class="slds-dl--horizontal__detail slds-tile__meta">
+                      <p class="slds-truncate"><apex:outputText escape="false" value="{!IF(ISBLANK(opp.StageName),'&nbsp;',opp.StageName)}" /></p>
+                    </dd>
+                  </dl>
+                </div>
+              </li> 
+              </apex:repeat>                      
+            </ul>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  </apex:outputPanel>
+</apex:component>

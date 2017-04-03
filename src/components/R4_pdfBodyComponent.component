@@ -1,0 +1,4 @@
+<apex:component controller="R4_pdfBodyComponentController" access="global">
+    <apex:attribute name="pdfPageName" type="String" description="pageName" assignTo="{!pdfPageURL}"/>
+    <apex:outputText value="{!body}" escape="false"></apex:outputText>
+</apex:component>

@@ -1,0 +1,157 @@
+<apex:component controller="R4_PASProcessAddProductController">
+<apex:attribute name="listCaseProductWrap" Type="CaseProductWrap[]" required="true" assignTo="{!selectedCaseProdWrapList}" description="case product list" />
+<apex:attribute name="inputCase" Type="Case" required="true" assignTo="{!currentCase}" description="Current Case" />
+<apex:attribute name="listRemovedCaseProduct" Type="Case_Product__c[]" required="true" assignTo="{!removedCaseProdList}" description="removed case product list" />
+<apex:stylesheet value="{!URLFOR($Resource.ScriptResources,'/ScriptResources/ProductEntryVFPage/ProductEntrystyle.css')}" id="styleid1"/> 
+       
+       <style>
+            #TSOAddProductsBodySection .bPageBlock .pbHeader {
+                display: block;
+            }
+       </style>
+       <apex:outputtext value="{!Settings}" />
+        <apex:outputPanel id="TSOAddProductsBody">
+        <div id="TSOAddProductsBodySection">
+            <apex:pageMessages id="error2" />
+            <apex:outputPanel >
+                <apex:actionFunction name="doSearchAF" action="{!updateAvailableList}" rerender="TSOAddProductsBody"/>
+                <apex:outputPanel id="hasAccess" layout="none">
+                    <apex:outputPanel id="mainBody">    
+                        <apex:pageBlock title="{!$Label.CL00111}" id="selected">
+                            <apex:pageBlockButtons id="pbbid2" location="both">
+                                <apex:commandButton action="{!null}" value="{!$Label.CL00009}" id="saveButton" onclick="loadingPop();ComSaveCall(); return false;" immediate="true"/>
+                                <apex:commandButton action="{!null}" value="{!$Label.CL00010}" id="cancelButton" onclick="loadingPop();ComCancelCall(); return false;" immediate="true"/>
+                            </apex:pageBlockButtons>        
+                            <apex:pageblockTable id="pbtID" style="width:100%"  cellpadding="0"  cellspacing="0" value="{!selectedCaseProdWrapList}" var="s" rowClasses="oddrow,evenrow">                
+                                
+                                <apex:column headerValue="Del" headerClass="headclass" style="width:8%;" id="col1id">
+                                    <center>
+                                        <apex:commandButton title="{!$Label.CL00084}" id="cmdbtnid1" status="stsDeleteStatus" 
+                                                            image="{!$Resource.Delete}"  style="height:10px;width:10px"   
+                                                            action="{!removeFromShoppingCart}" reRender="selected,searchResults" 
+                                                            immediate="true">
+                                            
+                                            <apex:param value="{!s.product.id}" assignTo="{!toUnselect}" name="toUnselect" id="prmid1"/>
+                                        </apex:commandButton>
+                                        <apex:actionstatus id="stsDeleteStatus">
+                                            <apex:facet name="start">
+                                                <img src="/img/loading.gif" />
+                                            </apex:facet>
+                                        </apex:actionstatus>  
+                                    </center>
+                                </apex:column>                    
+                                <apex:column style="width:25%;font-size:11px" headerValue="Product Name" value="{!s.product.Name}" id="col2id"/>
+                                <apex:column headerValue="Quantity" id="col3id">                
+                                    <apex:inputField style="width:100%;font-size:11px" id="ifid1" value="{!s.prprod.Quantity__c }" onkeydown="return checkNumber(event,this)"/>         
+                                </apex:column>  
+   
+                                <apex:column headerValue="Price" id="col5aid">                
+                                    <apex:outputText style="width:100%;font-size:11px" id="ifid2a" value="{!s.prprod.Price__c }" />          
+                                </apex:column>
+                                <apex:column headerValue="Currency" id="col5bid">                
+                                    <apex:outputText style="width:100%;font-size:11px" id="ifid2b" value="{!s.prprod.CurrencyIsoCode}" />          
+                                </apex:column>
+   
+                                  <apex:column headerValue="Shipping Charges" id="col5cid">                
+                                    <apex:outputText style="width:100%;font-size:11px" id="ifid2c" value="{!s.prprod.Shipping_Charges__c}" />          
+                                </apex:column>
+   
+                                <apex:column headerValue="Global Sales Code (GSC)" id="col5id">                
+                                    <apex:outputText style="width:100%;font-size:11px" id="ifid2" value="{!s.prprod.Global_Sales_Code_GSC__c }" />          
+                                </apex:column>
+                                <apex:column headerValue="Product Code" id="col6id">                
+                                    <apex:outputText style="width:100%;font-size:11px" id="ifid3" value="{!s.product.Profit_Center_Code__c }" />          
+                                </apex:column>
+                                <apex:column headerValue="Sub Product" id="col7id">                
+                                    <apex:outputText style="width:100%;font-size:11px" id="ifid4" value="{!s.product.Sub_Product__c }" />          
+                                </apex:column>
+                            </apex:pageblockTable>
+                                           
+                        </apex:pageBlock>
+                        
+                        <!-- this is the lower table: search bar and search results -->
+                        <apex:outputPanel id="productSection">
+                            <apex:pageBlock id="pb2id">            
+                                <apex:outputPanel styleClass="search" id="op2id">
+                                    {!$Label.R4_PAS_Case_Product_Search_Label}
+                                </apex:outputPanel>
+                                <apex:actionRegion renderRegionOnly="false" immediate="true"  id="arid1">                                   
+                                    <!-- here we invoke the scripting to get out fancy 'no button' search bar to work -->
+                                    <apex:inputText id="it1id" value="{!searchString}"  style="width:230px"  onkeypress="return noenter(event);" />
+                                    &nbsp;&nbsp;
+                                    <apex:commandButton value="Search" action="{!updateAvailableList}"  rerender="productSection" status="searchStatus" reRender="searchResults"/>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;
+                                    <!-- actionStatus component makes it easy to let the user know when a search is underway -->
+                                    <apex:actionStatus id="searchStatus">
+                                        <apex:facet name="start">
+                                            <img src="/img/loading.gif" />
+                                        </apex:facet>
+                                    </apex:actionstatus>
+                                    
+                                </apex:actionRegion>
+                                <br/>
+                                <br/>
+                                <apex:outputPanel id="searchResults">                
+                                    <apex:pageBlockTable id="pbt1id" style="width:100% height:50%;"  cellspacing="1" cellpadding="1"  value="{!availableProductList}" var="a" rowClasses="oddrow,evenrow">                    
+                                        <apex:column headerValue="Action" id="col5id" style="width:6%;">
+                                            <!-- command button in a column... neato -->
+                                            <apex:commandButton id="btn4id" value="{!$Label.CL00085}" action="{!addToShoppingCart}" reRender="selected,searchResults" immediate="true" status="stsSelectStatus">
+                                                <!-- again we use apex:param to be able to tell the controller which row we are working with -->
+                                                <apex:param value="{!a.Id}" assignTo="{!toSelect}" name="toSelect" id="prmid2"/>
+                                            </apex:commandButton>
+                                            <apex:actionstatus id="stsSelectStatus">
+                                                <apex:facet name="start">
+                                                    <img src="/img/loading.gif" />
+                                                </apex:facet>
+                                            </apex:actionstatus>
+                                        </apex:column>
+                                        <apex:column headerValue="Product Name" value="{!a.Name}" id="column"/>                        
+                                        <apex:column headerValue="Product Code" value="{!a.Profit_Center_Code__c}"/>
+                                        <apex:column headerValue="Global Sales Code (GSC)" value="{!a.Global_Sales_Code_GSC__c}"/>
+                                        <apex:column headerValue="Sub Product" value="{!a.Sub_Product__c}"/>  
+                                    </apex:pageBlockTable>                    
+                                    <!-- We put up a warning if results exceed 100 rows -->
+                                    <apex:outputPanel styleClass="fyi" rendered="{!overLimit}" id="op3id">
+                                        <br/>
+                                        Your search returned over 50 results, use a more specific search string if you do not see the desired {!$ObjectType.Name.Label}.
+                                        <br/>
+                                    </apex:outputPanel>                    
+                                </apex:outputPanel>            
+                            </apex:pageBlock>            
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </div>
+    </apex:outputPanel>
+<apex:includeScript value="{!URLFOR($Resource.ScriptResources,'/ScriptResources/ProductEntryVFPage/ProductEntryscript.js')}" id="jsid1"/>  
+    <script>
+    function noenter(ev)  {
+        if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+            doSearchAF();
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    function checkNumber(e,_this){
+        var keynum,keychar,numcheck;
+        if(window.event) // IE
+        {
+            keynum = e.keyCode
+        }
+        else if(e.which) // Netscape/Firefox/Opera
+        {
+            keynum = e.which
+        }
+        keychar = String.fromCharCode(keynum)
+        numcheck = /\d/;
+        console.log(keychar,'     ',keynum);
+        if((keynum != 8 && keynum!=37 && keynum!=39 && keynum!=46 && keynum<48) || (keynum > 57)){
+            return false;
+        }
+        return true;
+    }
+    </script>
+</apex:component>

@@ -1,0 +1,350 @@
+<apex:page id="thePage" standardcontroller="CIC_Visit__c" extensions="ExtCIC_Visit_MultiSelectContact" showheader="false" sidebar="false" title="Add Visitors" tabStyle="CIC_Visit__c">
+    <div id="loading-curtain-div" style="top:0px;left:0px;text-align:center;width:100%;height:100%;display:none;background-color:#FFF;opacity:0.45;position:absolute;z-index:9000;filter:alpha(opacity=45);background-repeat:no-repeat;background-position:center center;background-image:url('/img/loading.gif');"></div>
+    <apex:includeScript value="{!URLFOR($Resource.jquery)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.IMP_BI_TableSorter, 'js/jquery.tablesorter.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.IMP_BI_TableSorter, 'js/jquery.tablesorter.widgets.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.IMP_BI_TableSorter, 'css/theme.blue.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.IMP_BI_TableSorter, 'addons/pager/jquery.tablesorter.pager.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.IMP_BI_TableSorter, 'addons/pager/jquery.tablesorter.pager.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.IMP_BI_TableSorter, 'js/widgets/widget-pager.js')}" />
+    <style>
+        #noAVCon {text-align:center;height:100%;}
+        #filterContent {text-align:center;height:100%;background-color:#DDDDDD;}
+        #filterTable > thead tr th{text-align:center;white-space: nowrap;text-overflow:ellipsis; overflow:hidden; font-size:12px; padding:3px 10px;}
+        #filterTable > tbody tr td{text-align:center;white-space: nowrap;text-overflow:ellipsis; overflow:hidden; font-size:12px; padding:3px 10px;}
+        
+        #ExistingTable > thead tr th{text-align:center;white-space: nowrap;text-overflow:ellipsis; overflow:hidden; font-size:12px; padding:3px 10px;}
+        #ExistingTable > tbody tr td{text-align:center;white-space: nowrap;text-overflow:ellipsis; overflow:hidden; font-size:12px; padding:3px 10px;}
+        
+    </style>
+    <script>
+        var cicVistId = '{!visitId}';
+        var rtId = '{!rtId}';
+        
+        function showLoading() {
+            $('#loading-curtain-div').show();
+        }
+        showLoading();
+        function hideLoading() {
+            $('#loading-curtain-div').hide();
+        }
+        
+        $(function(){
+            initialTable();
+        });
+        
+        
+        
+        function saveCD () {
+            var idString = $("[id$='selectedConId']").val();
+            
+            $('.tdCheckbox').each(function() {
+                 if (this.checked) {
+                    idString += idString == '' ? this.name : ';' + this.name;
+                 }
+           });
+           $("[id$='selectedConId']").val(idString);
+           
+           if (idString == '') {
+                alert('{!$Label.CIC_No_Contact_Selected}');    
+                hideLoading();      
+           } else {
+                addVisitors();
+           }
+        }
+        
+        function searchCon () {
+        	var idString = $('#searchChar').val();
+            //alert(idString);
+            
+           if (idString == '') {
+                alert('{!$Label.CIC_Enter_Contact_Name}');   
+                
+                hideLoading(); 
+                
+                     
+           } else {
+           		$("[id$='searchFilter']").val(idString);
+                searchGo();
+                 
+           }
+            
+        }
+        
+        function initialTable () {
+        	$("#filterTable").tablesorter({
+                  theme : 'blue',
+                  // this is the default setting
+                  cssChildRow: "tablesorter-childRow",
+            
+                  // initialize zebra and filter widgets
+                  widgets: ["zebra", "filter", "pager"],
+            
+                  widgetOptions: {
+                    // output default: '{page}/{totalPages}'
+                    // possible variables: {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
+                    pager_output: '{startRow} - {endRow} / {filteredRows} ({totalRows})', // '{page}/{totalPages}'
+                    pager_removeRows: false,
+            
+            
+                    // include child row content while filtering, if true
+                    filter_childRows  : true,
+                    // class name applied to filter row and each input
+                    filter_cssFilter  : 'tablesorter-filter',
+                    // search from beginning
+                    filter_startsWith : false,
+                    // Set this option to false to make the searches case sensitive 
+                    filter_ignoreCase : true
+                  },
+                  // third click on the header will reset column to default - unsorted
+                  sortReset   : true,
+                  // Resets the sort direction so that clicking on an unsorted column will sort in the sortInitialOrder direction.
+                  sortRestart : true,
+                  headers: {
+                      0: {sorter: true,filter: false}
+                  }
+                 
+           });
+              
+           $('#filterTable input[type="checkbox"]').click(function() {
+                
+                var order = this.checked ? '1' : '0';
+                var selectedValue = this.checked;
+                $(this).prev().html(order);
+                if (this.className == 'thCheckbox') {
+                    $('.tdCheckbox').each(function() {
+                         this.checked = selectedValue;
+                         $(this).prev().html(order);
+                    });
+                } else {
+                    var count = 0;
+                    $('.tdCheckbox').each(function() {
+                         if (this.checked != selectedValue) {
+                            count++;
+                         }
+                    });
+                    
+                    if (count == 0 || !selectedValue) {
+                        $('.thCheckbox').prop('checked', selectedValue);
+                        $('.thCheckbox').prev().html(order);
+                    }
+                }
+                $(this).parents("table").trigger("update");
+                 
+           });
+           
+           
+              
+              //
+           $("#ExistingTable").tablesorter({
+                  theme : 'blue',
+                  // this is the default setting
+                  cssChildRow: "tablesorter-childRow",
+                  widgets: ["zebra"],
+           });
+           
+           
+           hideLoading();
+        }
+        
+        function catchEnter (evt) {
+        	var e=(evt)?evt:window.event;
+        	var idString = $('#searchChar').val();
+        	
+        	if (e.keyCode==13) {
+        		
+			　　　showLoading();
+			    searchCon();
+			     e.preventDefault();
+   			e.stopPropagation();
+			    return false;
+			}
+        }
+        
+        function noAction(){
+        	return false;
+        }
+    </script>
+    
+    <style>
+        .tablesorter-blue th, .tablesorter-blue thead td{
+            background-color:#e0e3e5;
+        }
+        
+        .odd{background-color: white !important;  } 
+        .even{background-color: #f5f5f5 !important; }
+        .tablesorter-blue tbody tr.even > td {
+            background-color: #f5f5f5;
+        }
+        .tablesorter-blue tbody tr.odd > td {
+            background-color: white;
+        }
+        table.tablesorter tr.even:hover td,
+        table.tablesorter tr.odd:hover td {
+            background-color: #CEF6E3;
+        }
+    </style>
+    
+    <apex:sectionHeader title="{!sectionHeaderTitle}" subtitle="{!sectionHeaderSubTitle}"/>
+    <apex:form id="theForm">
+        <apex:inputHidden id="selectedConId" value="{!selectedConId}"/>
+        <apex:actionfunction name="addVisitors" action="{!addVisitors}" rerender="msg, avBSI, evisitor, buttons, topButton" oncomplete="hideLoading();initialTable();">
+        </apex:actionfunction>
+        
+        <apex:inputHidden id="searchFilter" value="{!searchContactName}"/>
+        <apex:actionfunction name="searchGo" action="{!searchContact}" rerender="msg, avBSI, evisitor, buttons, topButton" oncomplete="hideLoading();initialTable();">
+        </apex:actionfunction>
+        
+        <apex:actionfunction name="newContact" action="{!URLFOR($Action.Contact.NewContact, null, ['accid'=cic_visit.Account__c, 'RecordType'= rtId, 'retURL'= RetUrl, 'saveURL'= RetUrl])}" >
+        </apex:actionfunction>
+        
+        <apex:actionfunction name="cancel" action="{!cancel}">
+        </apex:actionfunction>
+        
+        <apex:pageMessages id="msg" escape="false"/>
+        <apex:pageBlock id="theBlock" tabstyle="CIC_Visit__c" mode="maindetail">
+            <apex:pageblocksection title="Available Contact" columns="1" collapsible="true" id="avsect">
+            	<apex:pageblockSectionItem >
+                    <apex:outputpanel rendered="{!!isRelatedWithAcc}">
+                        <div>
+                        	<span>{!$Label.CIC_Enter_Contact_Name} </span><input id="searchChar" type="text" onKeydown="catchEnter();"> </input>
+                        	<input type="button" value="Go" class="btn" onclick="showLoading();searchCon();" style="min-width:80px;" id="searchBt"/>
+                        </div>
+                        
+                    </apex:outputpanel>
+                    
+                </apex:pageblockSectionItem>
+                
+                <!--  
+	                <apex:pageblockSectionItem >
+	                    <apex:outputpanel rendered="{!noAVCon}">
+	                        <div id="noAVCon">{!$Label.CIC_Visitor_No_Available_Contact}</div>
+	                        
+	                    </apex:outputpanel>
+	                </apex:pageblockSectionItem>
+                -->
+                <apex:pageblockSectionItem >
+                    <apex:outputpanel id="avBSI">
+                    	<div id="filterContent" style="padding: 0px 40px;border: 2px solid #CAA;border-radius: 12px;background: #F8F8F8;">
+                        
+                            <table id="filterTable">
+                            
+                                <thead>
+                                    <th style="width:21px;">
+                                            <apex:outputpanel style="display:none">
+                                                        0
+                                            </apex:outputpanel>
+                                            <input type="checkbox" class="thCheckbox" />
+                                    </th>
+                                    <apex:repeat value="{!list_fsm}" var="ft">
+                                    	<th data-placeholder=" ">
+                                        	<apex:variable value="{!ft.Label}" var="c" />
+                                            <apex:outputText value="{!ft.Label}" rendered="{!!(c = 'Account ID')}"/>
+                                            <apex:outputText value="{!$ObjectType.Account.fields.Name.label}" rendered="{!(c = 'Account ID')}"/>
+                                        </th>
+                                    </apex:repeat>
+                                </thead>
+                                  
+                                <tbody>
+                                    <apex:repeat value="{!AvailableCon}" var="cd">
+                                        <tr>
+                                            
+                                            <td style="width:21px;">
+                                                <apex:outputpanel style="display:none">
+                                                        0
+                                                </apex:outputpanel>
+                                                <input type="checkbox" class="tdCheckbox" name="{!cd.id}"/>
+                                            </td>
+                                            <apex:repeat value="{!list_fsm}" var="fs">
+                                                <td>
+                                                    <apex:outputField value="{!cd[fs.fieldPath]}"/>
+                                                </td>
+                                            </apex:repeat>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                                
+                            </table>
+                           
+                            <div class="pager">
+                                <img src="{!URLFOR($Resource.IMP_BI_TableSorter, '/addons/pager/icons/first.png')}" class="first" alt="First" />
+                                <img src="{!URLFOR($Resource.IMP_BI_TableSorter, '/addons/pager/icons/prev.png')}" class="prev" alt="Prev" />
+                                <span class="pagedisplay"></span> 
+                                <img src="{!URLFOR($Resource.IMP_BI_TableSorter, '/addons/pager/icons/next.png')}" class="next" alt="Next" />
+                                <img src="{!URLFOR($Resource.IMP_BI_TableSorter, '/addons/pager/icons/last.png')}" class="last" alt="Last" />
+                                <select class="pagesize" title="Select page size">
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="30">30</option>
+                                    <option value="40">40</option>
+                                </select>
+                                <select class="gotoPage" title="Select page number"></select>
+                            </div>
+                            <apex:outputpanel id="topButton" >
+                            <apex:outputpanel rendered="{!(AvailableCon.size > 0)}">
+                            <center style="vertical-align: middle;line-height: 40px;">
+                                <input type="button" value="{!$Label.Add_For_Button}" class="btn" onclick="showLoading();saveCD();" style="min-width:80px;display:{!IF(AvailableCon.size > 0, '','none')}"/>
+                                <input type="button" value="{!$Label.New_Contact_for_Button}" class="btn" onclick="showLoading();newContact();" style="min-width:80px;"/>
+                                <input type="button" value="{!$Label.Done_For_Button}" class="btn" onclick="showLoading();cancel();" style="min-width:80px;"/>
+                                <!--  <apex:commandButton value="{!$Label.New_Contact_for_Button}" action="{!URLFOR($Action.Contact.NewContact, null, ['accid'=cic_visit.Account__c, 'RecordType'= rtId, 'retURL'= RetUrl, 'saveURL'= RetUrl])}" />
+                                <apex:commandButton value="{!$Label.Done_For_Button}" action="{!cancel}" immediate="true"/>-->
+                            </center>
+                            </apex:outputpanel>
+                            </apex:outputpanel>
+                        </div>
+                    </apex:outputpanel>
+                </apex:pageblockSectionItem>
+            </apex:pageblocksection>
+             
+            <apex:pageblocksection title="Existing Visitors" columns="1" collapsible="true" id="evisitor">
+                <apex:pageblockSectionItem >
+                    <apex:outputpanel >
+                        <div id="existingContent" style=" padding: 0px 40px;border: 2px solid #CAA;border-radius: 12px;background: #F8F8F8; ">
+                            <table id="ExistingTable">
+                                    
+                               <thead>
+                                
+                                   <apex:repeat value="{!list_fsm}" var="ft">
+                                       <th data-placeholder="">
+                                           <apex:variable value="{!ft.Label}" var="c" />
+                                            <apex:outputText value="{!ft.Label}" rendered="{!!(c = 'Account ID')}"/>
+                                            <apex:outputText value="{!$ObjectType.Account.fields.Name.label}" rendered="{!(c = 'Account ID')}"/>
+                                       </th>
+                                   </apex:repeat>
+                               </thead>
+                                 
+                               <tbody>
+                                   <apex:repeat value="{!ExistingV}" var="ev">
+                                       <tr>
+                                            <apex:repeat value="{!list_fsm}" var="fs">
+                                               <td>
+                                                   <apex:outputField value="{!ev[fs.fieldPath]}"/>
+                                               </td>
+                                           </apex:repeat>
+                                       </tr>
+                                   </apex:repeat>
+                               </tbody>
+                               
+                           </table>
+                       </div>
+                   </apex:outputpanel>
+                </apex:pageblockSectionItem>     
+            </apex:pageblocksection>
+            <apex:outputpanel id="buttons">
+            <apex:outputpanel rendered="{!(AvailableCon.size = 0)}">
+                <center style="vertical-align: middle;line-height: 40px;">
+                		<input type="button" value="{!$Label.Add_For_Button}" class="btn" onclick="showLoading();saveCD();" style="min-width:80px;display:{!IF(AvailableCon.size > 0, '','none')}"/>
+                       <input type="button" value="{!$Label.New_Contact_for_Button}" class="btn" onclick="showLoading();newContact();" style="min-width:80px;"/>
+                       <input type="button" value="{!$Label.Done_For_Button}" class="btn" onclick="showLoading();cancel();" style="min-width:80px;"/>
+                       
+                </center>
+            </apex:outputpanel>
+            </apex:outputpanel>
+        </apex:pageBlock>
+    </apex:form>
+    
+    <!--   
+     -->
+     
+     
+</apex:page>

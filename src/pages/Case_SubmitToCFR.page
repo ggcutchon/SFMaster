@@ -1,0 +1,41 @@
+<apex:page standardController="Case" extensions="Case2CFR" action="{!submitCase2CFR}" id="page">
+	<apex:stylesheet value="{!URLFOR($Resource.SLDS0202, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+    <div class="mmm-bootstrap-wrapper">
+		<div class="slds-grid slds-wrap slds-grid--pull-padded " >
+            <apex:variable var="foo" value="foo" rendered="{!NOT(showErrorBox)}">
+    		 <div class="slds-p-horizontal--small slds-size--1-of-1 ">
+                 <div class="slds-text-heading--medium slds-text-align--center slds-m-top--x-large">{!$Label.CRM2CFR_SubmittingPlaceholder}</div>
+                     <div class="slds-is-relative slds-m-top--xx-large">
+                        <div class="slds-spinner_container">
+                          <div class="slds-spinner--brand slds-spinner slds-spinner--large" role="alert">
+                            <span class="slds-assistive-text">{!$Label.CRM2CFR_LoadingAssistiveText}</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+            </apex:variable>
+            <apex:variable var="foo" value="foo" rendered="{!showErrorBox}">
+                <div role="alertdialog" tabindex="-1" aria-labelledby="prompt-heading-id" aria-describedby="prompt-message-wrapper" class="slds-modal slds-fade-in-open slds-modal--prompt">
+                  <div class="slds-modal__container" id="mmmPageError">
+                    <div class="slds-modal__header slds-theme--error slds-theme--alert-texture">
+                      <h2 class="slds-text-heading--medium" id="prompt-heading-id">{!$Label.CRM2CFR_ErrorBoxHeading}</h2>
+                    </div>
+                    <div class="slds-modal__content slds-p-around--medium">
+                      <div styleClass="mmmPageMessages">
+                          <p><apex:messages /></p>
+                      </div>
+                    </div>
+                    <div class="slds-modal__footer slds-theme--default">
+                        <apex:form >
+                            <apex:CommandButton value="Okay" styleClass="slds-button slds-button--neutral js-okButton" action="{!cancel}"/>
+                        </apex:form>
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-backdrop slds-backdrop--open"></div>
+           </apex:variable>
+        </div>
+	</div>
+</apex:page>

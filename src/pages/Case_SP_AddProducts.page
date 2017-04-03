@@ -1,0 +1,357 @@
+<apex:page standardController="Case" standardStylesheets="true" extensions="VFC01_CaseProductEntryExtension" id="pgID" sidebar="false">
+<apex:includeScript value="{!URLFOR($Resource.jquery)}"/> 
+<apex:includeScript value="{!URLFOR($Resource.ScriptResources,'/ScriptResources/ProductEntryVFPage/ProductEntryscript.js')}" id="jsid1"/>  
+<apex:stylesheet value="{!URLFOR($Resource.ScriptResources,'/ScriptResources/ProductEntryVFPage/ProductEntrystyle.css')}" id="styleid1"/>
+
+<html>
+  <head>
+      <script type='text/javascript'>
+        function noenter(ev)  {
+            if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+                doSearchAF();
+                return false;
+             } else {
+                  return true;
+             }
+         }
+         //added by Bruce wang for SFDC-3963 at 2016-9-18
+         function ShowDiv(){
+         	//show/hidden the four filters div
+         	if($("#MoreSearchFilterID").css("visibility")=='hidden'){
+         		$("#MoreSearchFilterID").css("visibility","visible");
+         	}else{
+         		$("#MoreSearchFilterID").css("visibility","hidden");
+         	}
+         	//self-adaption high
+         	if($("#MoreSearchFilterID").css("position")=='static'){
+         		$("#MoreSearchFilterID").css("position","absolute");
+         	}else{
+         		$("#MoreSearchFilterID").css("position","static");
+         	}
+         	//show/hidden More fillters
+         	if($("#MoreFilter").css("display")=='none'){
+         		$("#MoreFilter").css("display","inline");
+         	}else{
+         		$("#MoreFilter").css("display","none");
+         	}
+         	//show/hidden Fewer filters
+         	if($("#FewerFilter").css("display")=='none'){
+         		$("#FewerFilter").css("display","inline");
+         	}else{
+         		$("#FewerFilter").css("display","none");
+         	}
+         	//show/hidden the first AND
+         	if($("#ANDId1").css("display")=='none'){
+         		$("#ANDId1").css("display","inline");
+         	}else{
+         		$("#ANDId1").css("display","none");
+         	}
+         	
+         }
+    </script>
+     
+  <meta name="viewport" content="width=device-width, user-scalable=yes">
+
+    <apex:sectionHeader Title="{!$Label.CL00110}" id="header"/>
+    
+  
+    <apex:form id="frmid">  
+     <apex:actionFunction name="doSearchAF" action="{!ProductSearchResultList}" />
+    <apex:outputPanel id="noAccess" rendered="{!NOT(hasAccess)}">
+        <apex:PageMessages id="errorMessage"/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<apex:CommandButton value="Ok" action="{!cancel}" style="width:80px;"/>
+    </apex:outputPanel>
+    <apex:outputPanel id="hasAccess" rendered="{!hasAccess}" layout="none">
+    <apex:pageMessages id="msgid"></apex:pageMessages>   
+        <apex:outputPanel id="mainBody">    
+         
+        <apex:pageBlock title="{!$Label.CL00111}" id="selected">       
+              <apex:pageblockTable id="pbtID" style="width:100%"  cellpadding="0"  cellspacing="0" value="{!selectedCaseProdList}" var="s" rowClasses="oddrow,evenrow">                
+                    <apex:column headerValue="Del" headerClass="headclass" style="width:8%;" id="col1id">
+                      <center>
+                        <apex:commandButton title="{!$Label.CL00084}" id="cmdbtnid1" status="stsDeleteStatus" image="{!$Resource.Delete}"  style="height:10px;width:10px"   action="{!removeFromShoppingCart}" reRender="selected,searchResults" immediate="true">
+                            <!-- this param is how we send an argument to the controller, so it knows which row we clicked 'remove' on -->
+                            <apex:param value="{!s.product.id}" assignTo="{!toUnselect}" name="toUnselect" id="prmid1"/>
+                        </apex:commandButton>
+                        <apex:actionstatus id="stsDeleteStatus">
+                            <apex:facet name="start">
+                                <img src="/img/loading.gif" />
+                            </apex:facet>
+                        </apex:actionstatus>  
+                      </center>
+                    </apex:column>                    
+                    <apex:column style="width:25%;font-size:11px" headerValue="Product Name" value="{!s.product.Name}" id="col2id"/>
+                                        <apex:column headerValue="Quantity" id="col3id">                
+                        <apex:inputField style="width:100%;font-size:11px" id="ifid1" value="{!s.prprod.Quantity__c }" />         
+                    </apex:column>
+                    
+                    <apex:column headerValue="Sample UOM" id="col6id">                
+                        <apex:outputField style="width:100%;font-size:11px" id="ifid4" value="{!s.prprod.Sample_UOM__c }" />          
+                    </apex:column>
+                    
+                    <apex:column headerValue="Line Description" id="col4id">                
+                        <apex:inputField style="width:100%;font-size:11px" id="ifid2" value="{!s.prprod.Line_Description__c }" />          
+                    </apex:column>
+                    
+                    <apex:column headerValue="Product Number" id="col5id">                
+                        <apex:inputField style="width:100%;font-size:11px" id="ifid3" value="{!s.prprod.ProductNum__c }" />          
+                    </apex:column>
+                    
+                </apex:pageblockTable>
+                <apex:pageBlockButtons id="pbbid1">
+                    <apex:commandButton action="{!onSave}" value="{!$Label.CL00009}" id="cmdbtnid2"/>
+                    <apex:commandButton action="{!onCancel}" value="{!$Label.CL00010}" id="cmdbtnid3" immediate="true"/>
+                </apex:pageBlockButtons>                
+        </apex:pageBlock>
+            
+        <!-- PriceBook selection section: user should be select pricebook before select products -->
+        <apex:pageBlock >
+            <apex:outputPanel styleClass="search" id="op2id">
+                    {!$Label.CL00234}
+                </apex:outputPanel>
+            <apex:selectList value="{!selectedPriceBook}" size="1"> 
+                <apex:selectOptions value="{!priceBookOptions}" /> 
+            </apex:selectList>
+            <apex:commandButton value="Choose" action="{!priceBookSelected}" rerender="productSection" status="stsChooseStatus"/> 
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <apex:actionstatus id="stsChooseStatus">
+                <apex:facet name="start">
+                    <img src="/img/loading.gif" />
+                </apex:facet>
+             </apex:actionstatus>
+             
+        </apex:pageBlock>
+
+        <!-- this is the lower table: search bar and search results -->
+            <apex:outputPanel id="productSection">
+            <apex:pageblock >
+            	<apex:outputPanel styleClass="search" id="op2id">
+                     {!$Label.Case_Product_Product_Search_Label}
+                </apex:outputPanel>
+                <br></br>
+            	<table>
+            		<tr>
+            			<td class="keywordElement" style="width:5%; vertical-align: top;">
+	            			<div>
+	            				<span class="inputTitle" style = "font-weight:700"> By KeyWord</span>
+	            				<br></br>
+	            				<apex:inputText id="KeywordInputID" value="{!KeyWordSearchString}"  style="width:230px" onkeypress="return noenter(event);"/>
+	            			</div>
+            			</td>
+            			<td class="SearchTabletd" >
+            				<div style="margin-left:15px">
+            					<span class="inputTitle" style = "font-weight:700">By Field Filter</span>
+	            				<div>
+					                <apex:selectList value="{!selectedFilterField1}" size="1"> 
+					                	<apex:selectOptions value="{!FilterFieldsOption}" /> 
+					            	</apex:selectList>
+									&nbsp;&nbsp;
+									<apex:selectList value="{!OperatorString1}" size="1"> 
+					                	<apex:selectOptions value="{!OperatorOption}" /> 
+					            	</apex:selectList>
+					            	&nbsp;&nbsp;
+					            	<apex:inputText id="InputTextId1" value="{!NeedSearchString1}"  style="width:230px" onkeypress="return noenter(event);"/>
+					            	<span class="TextBox" id="ANDId1" style="display:None;">AND</span>
+					            	<a href="" id="MoreFilter" style="display:inline;color:blue" onclick="ShowDiv()">More filters &gt;&gt;</a>
+			           			</div>
+			           			<div id="MoreSearchFilterID" style="visibility: hidden; position: absolute;">
+				           			
+					                <apex:selectList value="{!selectedFilterField2}" size="1" style="margin-top: 5px;"> 
+					                	<apex:selectOptions value="{!FilterFieldsOption}" /> 
+					            	</apex:selectList>
+									&nbsp;&nbsp;
+									<apex:selectList value="{!OperatorString2}" size="1"> 
+					                	<apex:selectOptions value="{!OperatorOption}" /> 
+					            	</apex:selectList>
+					            	&nbsp;&nbsp;
+					            	<apex:inputText id="InputTextId2" value="{!NeedSearchString2}"  style="width:230px" onkeypress="return noenter(event);"/>
+					            	<span class="TextBox" id="ANDId2" style="display:inline;">AND</span>
+			           			
+			           				<br></br>
+			           			
+					                <apex:selectList value="{!selectedFilterField3}" size="1" style="margin-top: 5px;"> 
+					                	<apex:selectOptions value="{!FilterFieldsOption}" /> 
+					            	</apex:selectList>
+									&nbsp;&nbsp;
+									<apex:selectList value="{!OperatorString3}" size="1"> 
+					                	<apex:selectOptions value="{!OperatorOption}" /> 
+					            	</apex:selectList>
+					            	&nbsp;&nbsp;
+					            	<apex:inputText id="InputTextId3" value="{!NeedSearchString3}"  style="width:230px" onkeypress="return noenter(event);"/>
+					            	<span class="TextBox" id="ANDId3" style="display:inline;">AND</span>
+			           				
+			           				<br></br>
+			           			
+			           			
+					                <apex:selectList value="{!selectedFilterField4}" size="1" style="margin-top: 5px;"> 
+					                	<apex:selectOptions value="{!FilterFieldsOption}" /> 
+					            	</apex:selectList>
+									&nbsp;&nbsp;
+									<apex:selectList value="{!OperatorString4}" size="1"> 
+					                	<apex:selectOptions value="{!OperatorOption}" /> 
+					            	</apex:selectList>
+					            	&nbsp;&nbsp;
+					            	<apex:inputText id="InputTextId4" value="{!NeedSearchString4}"  style="width:230px" onkeypress="return noenter(event);"/>
+					            	<span class="TextBox" id="ANDId4" style="display:inline;">AND</span>
+			           			
+			           				<br></br>
+			           			
+					                <apex:selectList value="{!selectedFilterField5}" size="1" style="margin-top: 5px;"> 
+					                	<apex:selectOptions value="{!FilterFieldsOption}" /> 
+					            	</apex:selectList>
+									&nbsp;&nbsp;
+									<apex:selectList value="{!OperatorString5}" size="1"> 
+					                	<apex:selectOptions value="{!OperatorOption}" /> 
+					            	</apex:selectList>
+					            	&nbsp;&nbsp;
+					            	<apex:inputText id="InputTextId5" value="{!NeedSearchString5}"  style="width:230px" onkeypress="return noenter(event);"/>
+				           			<a href="" id="FewerFilter" style="display:None;color:blue" onclick="ShowDiv()"> Fewer filters &lt;&lt; </a>
+			           			</div>
+		           			</div>
+            			</td>
+            		</tr>
+            		<tr>
+            			<td>
+            				<apex:commandButton value="Search" action="{!ProductSearchResultList}" rerender="productSection" status="KeysearchStatus" reRender="searchResults"/>
+            				<apex:actionStatus id="KeysearchStatus">
+		                        <apex:facet name="start">
+		                            <img src="/img/loading.gif" />
+		                        </apex:facet>
+		                     </apex:actionstatus>
+            			</td>
+            		</tr>
+            	</table>
+            
+            </apex:pageblock>
+            <apex:pageBlock id="pb2id" >     
+            <!-- here we invoke the scripting to get out fancy 'no button' search bar to work -->
+             <!-- actionStatus component makes it easy to let the user know when a search is underway -->
+            <!--         
+                <apex:outputPanel styleClass="search" id="op2id">
+                    {!$Label.Case_Product_Product_Search_Label}
+                </apex:outputPanel>
+                <apex:actionRegion renderRegionOnly="false" immediate="true"  id="arid1">                                   
+                    <apex:inputText id="it1id" value="{!searchString}"  style="width:230px"  onkeypress="return noenter(event);" />
+                    &nbsp;&nbsp;
+                    <apex:commandButton value="Search" action="{!updateAvailableList}"  rerender="productSection" status="searchStatus" reRender="searchResults"/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <apex:actionStatus id="searchStatus">
+                        <apex:facet name="start">
+                            <img src="/img/loading.gif" />
+                        </apex:facet>
+                     </apex:actionstatus>
+                                       
+                </apex:actionRegion>
+             -->
+                <apex:outputPanel id="searchResults"> 
+                	<apex:actionStatus id="SortsearchStatus">
+                        <apex:facet name="start">
+                            <img src="/img/loading.gif" />
+                        </apex:facet>
+		            </apex:actionstatus>                
+                    <apex:pageBlockTable id="pbt1id" style="width:100%"  cellspacing="1" cellpadding="1"  value="{!Product2WrapList}" var="a" rowClasses="oddrow,evenrow">                    
+                       <!-- Updated By Bruce wang for SFDC-3963 at 2016/9/18 -->
+                       <!-- 
+                        <apex:column headerValue="Product Name" value="{!a.Name}" id="column"/>                        
+                        <apex:column headerValue="Product Description" value="{!a.Description}"/> 
+                        <apex:column headerValue="Product / SKU Id" value="{!a.Product_SKU_Id__c}"/> 
+                        <apex:column headerValue="Product #" value="{!a.Product_No__c}"/>
+                        <apex:column headerValue="Global Sales Code (GSC)" value="{!a.Global_Sales_Code_GSC__c}"/>
+                        <apex:column headerValue="P&L Division Name" value="{!a.P_L_Division_Name__c}"/> 
+                       -->
+                       
+                       <apex:column >
+							<apex:facet name="header">
+								<apex:commandLink value="Product Name {!IF(SortOrderUsedinBack != null,IF(SortOrderUsedinBack='asc','▲','▼'),'')}" action="{!SortProduct}" reRender="pbt1id" status="SortsearchStatus">
+									<apex:param name="FilterField" assignTo="{!FilterField}" value="Name"  />
+								</apex:commandLink> 
+							</apex:facet>
+							<apex:outputField value="{!a.Prod.Name}"/>
+						</apex:column>   
+						
+						<apex:column >
+							<apex:facet name="header">
+								<apex:commandLink value="Product Description {!IF(PDSortOrder != null,IF(PDSortOrder='asc','▲','▼'),'')}" action="{!SortProductPD}" reRender="pbt1id" status="SortsearchStatus">
+								<apex:param name="FilterField" assignTo="{!FilterField}" value="Description"  />
+								</apex:commandLink>
+							</apex:facet>
+							<apex:outputField value="{!a.Prod.Description}"/>
+						</apex:column>
+						
+						<apex:column >
+							<apex:facet name="header">
+								<apex:commandLink value="Product / SKU Id {!IF(PSISortOrder != null,IF(PSISortOrder='asc','▲','▼'),'')}" action="{!SortProductPSI}" reRender="pbt1id" status="SortsearchStatus">
+								<apex:param name="FilterField" assignTo="{!FilterField}" value="Product_SKU_Id__c"  />
+								</apex:commandLink>
+							</apex:facet>
+							<apex:outputField value="{!a.Prod.Product_SKU_Id__c}"/>
+						</apex:column>
+						
+						<apex:column >
+							<apex:facet name="header">
+								<apex:commandLink value="Product # {!IF(PNSortOrder != null,IF(PNSortOrder='asc','▲','▼'),'')}" action="{!SortProductPN}" reRender="pbt1id" status="SortsearchStatus">
+								<apex:param name="FilterField" assignTo="{!FilterField}" value="Product_No__c"  />
+								</apex:commandLink>
+							</apex:facet>
+							<apex:outputField value="{!a.Prod.Product_No__c}"/>
+						</apex:column>
+						
+						<apex:column >
+							<apex:facet name="header">
+								<apex:commandLink value="Global Sales Code (GSC) {!IF(PGSCSortOrder != null,IF(PGSCSortOrder='asc','▲','▼'),'')}" action="{!SortProductPGSC}" reRender="pbt1id" status="SortsearchStatus">
+								<apex:param name="FilterField" assignTo="{!FilterField}" value="Global_Sales_Code_GSC__c"  />
+								</apex:commandLink>
+							</apex:facet>
+							<apex:outputField value="{!a.Prod.Global_Sales_Code_GSC__c}"/>
+						</apex:column>
+							
+						<apex:column >
+							<apex:facet name="header">
+								<apex:commandLink value="P&L Division Name {!IF(PLDNSortOrder != null,IF(PLDNSortOrder='asc','▲','▼'),'')}" action="{!SortProductPLDN}" reRender="pbt1id" status="SortsearchStatus">
+								<apex:param name="FilterField" assignTo="{!FilterField}" value="P_L_Division_Name__c"  />
+								</apex:commandLink>
+							</apex:facet>
+							<apex:outputField value="{!a.Prod.P_L_Division_Name__c}"/>
+						</apex:column>
+						<apex:inputHidden value="{!SortOrderUsedinBack}" id="theHiddenInput"/>
+						<apex:inputHidden value="{!PDSortOrder}" id="theHiddenInput2"/>
+						<apex:inputHidden value="{!PSISortOrder}" id="theHiddenInput3"/>
+						<apex:inputHidden value="{!PNSortOrder}" id="theHiddenInput4"/>
+						<apex:inputHidden value="{!PGSCSortOrder}" id="theHiddenInput5"/>
+						<apex:inputHidden value="{!PLDNSortOrder}" id="theHiddenInput6"/>
+						
+                        <!-- 
+                        <apex:column headerValue="SKU or Product" value="{!a.SKU_Or_Product__c}"/> 
+                        <apex:column headerValue="Locale" value="{!a.Locale__c}"/>   
+                        -->                                          
+                        <apex:column id="col5id" style="width:6%;">
+                            <!-- command button in a column... neato -->
+                            <apex:commandButton id="btn4id" value="{!$Label.CL00085}" action="{!addToShoppingCart}" reRender="selected,searchResults" immediate="true" status="stsSelectStatus">
+                                <!-- again we use apex:param to be able to tell the controller which row we are working with -->
+                                <apex:param value="{!a.Prod.Id}" assignTo="{!toSelect}" name="toSelect" id="prmid2"/>
+                            </apex:commandButton>
+                            <apex:actionstatus id="stsSelectStatus">
+                                <apex:facet name="start">
+                                    <img src="/img/loading.gif" />
+                                </apex:facet>
+                             </apex:actionstatus>
+                        </apex:column>
+                        
+                    </apex:pageBlockTable>                    
+                    <!-- We put up a warning if results exceed 100 rows -->
+                    <apex:outputPanel styleClass="fyi" rendered="{!overLimit}" id="op3id">
+                        <br/>
+                        Your search returned over 100 results, use a more specific search string if you do not see the desired {!$ObjectType.Name.Label}.
+                        <br/>
+                    </apex:outputPanel>                    
+                </apex:outputPanel>            
+            </apex:pageBlock>            
+        </apex:outputPanel>
+            </apex:outputPanel>
+            </apex:outputPanel>
+    </apex:form>
+</meta>
+  </head>
+  </html>
+
+</apex:page>
